@@ -9,6 +9,8 @@ namespace VMelnik\DoctrineEncryptBundle\Encryptors;
  */
 class AES256Encryptor implements EncryptorInterface {
 
+    const ENCRYPT_METHOD = 'aes-256-ecb';
+
     /**
      * @var string
      */
@@ -24,9 +26,8 @@ class AES256Encryptor implements EncryptorInterface {
      */
     public function __construct($key) {
         $this->secretKey = md5($key);
-        $this->initializationVector = mcrypt_create_iv(
-            mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB),
-            MCRYPT_RAND
+        $this->initializationVector = openssl_random_pseudo_bytes(
+            openssl_cipher_iv_length(self::ENCRYPT_METHOD)
         );
     }
 
@@ -34,11 +35,11 @@ class AES256Encryptor implements EncryptorInterface {
      * {@inheritdoc}
      */
     public function encrypt($data) {
-        return trim(base64_encode(mcrypt_encrypt(
-            MCRYPT_RIJNDAEL_256,
-            $this->secretKey,
+        return trim(base64_encode(openssl_encrypt(
             $data,
-            MCRYPT_MODE_ECB,
+            self::ENCRYPT_METHOD,
+            $this->secretKey,
+            0,
             $this->initializationVector
         )));
     }
@@ -47,11 +48,11 @@ class AES256Encryptor implements EncryptorInterface {
      * {@inheritdoc}
      */
     public function decrypt($data) {
-        return trim(mcrypt_decrypt(
-            MCRYPT_RIJNDAEL_256,
-            $this->secretKey,
+        return trim(openssl_decrypt(
             base64_decode($data),
-            MCRYPT_MODE_ECB,
+            self::ENCRYPT_METHOD,
+            $this->secretKey,
+            0,
             $this->initializationVector
         ));
     }
